@@ -1,0 +1,6 @@
+[submodule "vendor/MIDI.js"]
+	path = vendor/MIDI.js
+	url = git://github.com/mudcube/MIDI.js.git
+[submodule "vendor/depthjs"]
+	path = vendor/depthjs
+	url = git://github.com/doug/depthjs.git
