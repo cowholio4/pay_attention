@@ -1,3 +1,12 @@
+// GLOBALS
+// MODE can be 
+var START_MODE = 0;
+var EXPLORE_MODE = 1;
+var RECORD_MODE = 2;
+var MODE = START_MODE;
+//var MODE = RECORD_MODE;
+//var MODE = EXPLORE_MODE;
+
 window.onload = function () {
 	MIDI.loadPlugin({
 		soundfontUrl: "./vendor/MIDI.js/soundfont/",
@@ -6,12 +15,15 @@ window.onload = function () {
 	});
 
   $("body").click( function(e) {
-    play_for_x_y_z( ( e.clientX /  $(window).width() ) * 100 , ( e.clientY /  $(window).height() ) * 100, 500 ); 
+    if( MODE == EXPLORE_MODE ) {
+      play_for_x_y_z( ( e.clientX /  $(window).width() ) * 100 , ( e.clientY /  $(window).height() ) * 100, 500, true ); 
+    }
   });
 
 };
 
 var last_note = null;
+var last_position = null;
 var colors =  MusicTheory.Synesthesia.map('Isaac Newton (1704)');
 var note_colors = {
     "A" : [ 356, 89, 71, 1],
@@ -35,11 +47,12 @@ function get_color_for_note_and_octave ( note, octave ) {
 }
 
 // x and y are on a 0-100 scale
-function play_for_x_y_z( x, y, z ) {
+function play_for_x_y_z( x, y, z, play ) {
+
   var note = getNoteForX( x );
   var octave = getOctaveForY( y );
   var midi_note = getMidiNumberForNoteAndOctave( note, octave );
-  if( midi_note == last_note ) { return }
+  if( midi_note == last_note && MODE == EXPLORE_MODE ) { return }
   last_note = midi_note;
 	var delay = 0; // play one note every quarter second
 	var velocity =  ( ( 2000 - z ) / 1.9 ); // how hard the note hits
@@ -58,61 +71,74 @@ function play_for_x_y_z( x, y, z ) {
   $("#current_note").css({ "width" : circle_diameter, "height" : circle_diameter, "border-radius" : circle_diameter/ 2 } );
 
 
-  
-	// play the note
-	MIDI.setVolume(0, 55 );
-	MIDI.noteOn(0, midi_note, velocity, delay);
-	MIDI.noteOff(0, midi_note, delay + 0.75);
+  if( play ) {  
+	  // play the note
+	  MIDI.setVolume(0, 55 );
+	  MIDI.noteOn(0, midi_note, velocity, delay);
+	  MIDI.noteOff(0, midi_note, delay + 0.75);
+  }
 
 
 }
 
+
 /* Kinect Hooks */
 DepthJS = {
       onKinectInit: function() {
-        console.log( "onKinectInit" );
         //$("#status").text("DepthJS + Kinect detected+!@");
         //$("#registration").text("Hand not in view");
       },
       onRegister: function(x, y, z, data) {
         console.log( "onRegister" );
         //$("#registration").text("Hand in view" + (data == null ? "" : ": " + data));
-        //$("#x").text("x: " + x);
-        //$("#y").text("y: " + y);
-        //$("#z").text("z: " + z);
       },
       onUnregister: function() {
         console.log( "onUnregister" );
         //$("#registration").text("Hand not in view");
-        //$("#x").text("");
-        //$("#y").text("");
-        //$("#z").text("");
       },
       onMove: function(x, y, z) {
         //console.log( x, y, z);
-        play_for_x_y_z( x, y, z );
+        if( MODE == EXPLORE_MODE ) {
+          play_for_x_y_z( x, y, z, true );  
+        }
+        else if( MODE == RECORD_MODE ) {
+          play_for_x_y_z( x, y, z, false );  
+          last_position = { x : x, y : y, z : z };
+        } 
+
         //alert( "DepthJS + Kinect detected+!@");
         //$("#x").text("x: " + x);
         //$("#y").text("y: " + y);
         //$("#z").text("z: " + z);
       },
       onSwipeLeft: function() {
-                     alert("onSwipeLeft");
+        alert("onSwipeLeft");
+        if( MODE == START_MODE ) {
+          MODE = RECORD_MODE;
+        }
       },
       onSwipeRight: function() {
-                      alert("onSwipeRight");
+        alert("onSwipeRight");
+        if( MODE == START_MODE ) {
+          MODE = EXPLORE_MODE;
+        }
       },
       onSwipeDown: function() {
-                     alert("onSwipeDown");
+                    // alert("onSwipeDown");
       },
       onSwipeUp: function() {
-                   alert("onSwipeUp");
+                   //alert("onSwipeUp");
       },
       onPush: function() {
          //       alert("onPush");
+        console.log( "PUSH" );
+        if( MODE == RECORD_MODE ) {
+          console.log( "RECORD PUSH");
+          play_for_x_y_z( last_position.x, last_position.y, last_position.z, true );
+        } 
       },
       onPull: function() {
-                alert("onPull");
+               // alert("onPull");
       }
     };
 

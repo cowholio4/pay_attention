@@ -3,9 +3,28 @@ body {
   height:100%;
   width:100%
 }
+h1 {
+  margin:0;
+  padding:0;
+}
 #current_note {
   display: none;
   position: absolute;
   left: 0;
   top: 0;
 }
+
+#home {
+  height:100%;
+}
+#welcome {
+  text-align:center;
+  width: 200px;
+  height: 200px;
+  border-radius: 100px;
+  line-height: 200px;
+  background-color: hsla(160, 94.1748%, 59.6078%, 1.0000);
+  margin: 0 auto;
+}
+
+
