@@ -1,8 +1,13 @@
 // GLOBALS
 // MODE can be 
 var START_MODE = 0;
+
 var EXPLORE_MODE = 1;
-var RECORD_MODE = 2;
+var EXPLORE_PAUSE_MODE = 2;
+
+var RECORD_MODE = 3;
+var RECORD_PAUSE_MODE = 4;
+
 var MODE = START_MODE;
 //var MODE = RECORD_MODE;
 //var MODE = EXPLORE_MODE;
@@ -15,16 +20,36 @@ window.onload = function () {
 	});
 
   $("body").click( function(e) {
-    if( MODE == EXPLORE_MODE ) {
+    if( MODE == EXPLORE_MODE || MODE == RECORD_MODE ) {
       play_for_x_y_z( ( e.clientX /  $(window).width() ) * 100 , ( e.clientY /  $(window).height() ) * 100, 500, true ); 
     }
   });
+ /* $("#body").mousemove(function(event) {
+   msg += event.pageX + ", " + event.pageY;
+  });
+  */
+  
+  if( MODE != START_MODE ) {
+    $("#home").hide();
+  }
+  $("#home .swipe-left").click( start_record_mode );
+  $("#home .swipe-right").click( start_explore_mode );
 
 };
 
+
+function start_record_mode() {
+  $("#home").hide();
+  MODE = RECORD_MODE;
+}
+function start_explore_mode (){
+  $("#home").hide();
+  MODE = EXPLORE_MODE;
+}
+
 var last_note = null;
 var last_position = null;
-var colors =  MusicTheory.Synesthesia.map('Isaac Newton (1704)');
+var played_notes = [];
 var note_colors = {
     "A" : [ 356, 89, 71, 1],
     "A#": [ 64, 38, 54, 1 ],
@@ -67,12 +92,17 @@ function play_for_x_y_z( x, y, z, play ) {
   note_color = get_color_for_note_and_octave( note, octave );
 
   circle_diameter = (velocity / 8.5) + 50;
+  if( ! play ) {
+    $("#hand_note").show().css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50, background: note_color  });
+    $("#hand_note").css({ "width" : circle_diameter, "height" : circle_diameter, "border-radius" : circle_diameter/ 2 } );
+  }
   $("#current_note").show().css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50, background: note_color  });
   $("#current_note").css({ "width" : circle_diameter, "height" : circle_diameter, "border-radius" : circle_diameter/ 2 } );
 
 
   if( play ) {  
 	  // play the note
+    played_notes.push( [ x, y, z] );
 	  MIDI.setVolume(0, 55 );
 	  MIDI.noteOn(0, midi_note, velocity, delay);
 	  MIDI.noteOff(0, midi_note, delay + 0.75);
@@ -112,15 +142,13 @@ DepthJS = {
         //$("#z").text("z: " + z);
       },
       onSwipeLeft: function() {
-        alert("onSwipeLeft");
         if( MODE == START_MODE ) {
-          MODE = RECORD_MODE;
+          start_record_mode();
         }
       },
       onSwipeRight: function() {
-        alert("onSwipeRight");
         if( MODE == START_MODE ) {
-          MODE = EXPLORE_MODE;
+          start_explore_mode();
         }
       },
       onSwipeDown: function() {
