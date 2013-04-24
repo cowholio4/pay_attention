@@ -1,5 +1,6 @@
 // GLOBALS
 // MODE can be 
+var colors =  MusicTheory.Synesthesia.map('Isaac Newton (1704)');
 var START_MODE = 0;
 
 var EXPLORE_MODE = 1;
@@ -38,13 +39,26 @@ window.onload = function () {
 };
 
 
+
 function start_record_mode() {
-  $("#home").hide();
+  $("body div").hide();
   MODE = RECORD_MODE;
 }
+function pause_record_mode() {
+  $("body div").hide();
+  $("#record_pause").show();
+  MODE = RECORD_PAUSE_MODE;
+}
+
 function start_explore_mode (){
-  $("#home").hide();
+  $("body div").hide();
   MODE = EXPLORE_MODE;
+
+}
+function pause_explore_mode() {
+  $("#home").hide();
+  $("#explore_pause").show();
+  MODE = EXPLORE_PAUSE_MODE;
 }
 
 var last_note = null;
@@ -125,6 +139,9 @@ DepthJS = {
       onUnregister: function() {
         console.log( "onUnregister" );
         //$("#registration").text("Hand not in view");
+        if( MODE == RECORD_MODE ) {
+          pause_record_mode();
+        }
       },
       onMove: function(x, y, z) {
         //console.log( x, y, z);
@@ -142,7 +159,7 @@ DepthJS = {
         //$("#z").text("z: " + z);
       },
       onSwipeLeft: function() {
-        if( MODE == START_MODE ) {
+        if( MODE == START_MODE || MODE == RECORD_PAUSE_MODE ) {
           start_record_mode();
         }
       },
