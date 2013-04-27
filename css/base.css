@@ -7,8 +7,7 @@ h1 {
   margin:0;
   padding:0;
 }
-#hand_note, #current_note {
-  display: none;
+#hand_note, #current_note, .square, .diamond-top, .diamond-bottom {
   position: absolute;
   left: 0;
   top: 0;
@@ -27,4 +26,19 @@ h1 {
   margin: 0 auto;
 }
 
+.diamond-top {
+  width: 0;
+  height: 0;
+}
+.diamond-bottom {
+  content: '';
+  width: 0;
+  height: 0;
+}
+
+
+.square {
+  width: 100px;
+  height: 100px;
+}
 

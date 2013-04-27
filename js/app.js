@@ -43,6 +43,7 @@ window.onload = function () {
 function start_record_mode() {
   $("body div").hide();
   MODE = RECORD_MODE;
+  $("#music_sheet").show();
 }
 function pause_record_mode() {
   $("body div").hide();
@@ -110,13 +111,35 @@ function play_for_x_y_z( x, y, z, play ) {
     $("#hand_note").show().css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50, background: note_color  });
     $("#hand_note").css({ "width" : circle_diameter, "height" : circle_diameter, "border-radius" : circle_diameter/ 2 } );
   }
-  $("#current_note").show().css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50, background: note_color  });
-  $("#current_note").css({ "width" : circle_diameter, "height" : circle_diameter, "border-radius" : circle_diameter/ 2 } );
+  if( MODE == EXPLORE_MODE ) {
+    $("#current_note").show().css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50, background: note_color  });
+    $("#current_note").css({ "width" : circle_diameter, "height" : circle_diameter, "border-radius" : circle_diameter/ 2 } );
+  }
 
 
   if( play ) {  
 	  // play the note
-    played_notes.push( [ x, y, z] );
+    var note_number = played_notes.push( [ x, y, z] );
+    // not sharps 
+    if( note.indexOf("#") == -1 ) {
+      played_note = $("<div>").addClass("square").css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50,  background: note_color  });
+      played_note.css({ "width" : circle_diameter, "height" : circle_diameter } );
+    }
+    else {
+      played_note = $("<div>");
+      border_width = Math.floor(Math.sqrt( ( (circle_diameter/2) * (circle_diameter/2) ) + ( (circle_diameter/2) * (circle_diameter/2) ) ));
+      diamond_top = $("<div>").addClass("diamond-top").css({ "border" : border_width+ "px solid transparent", "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50 - border_width , "border-bottom-color" : note_color });
+      //diamond_top.css("border" , (circle_diameter/2)+ "px solid transparent");
+
+      diamond_bottom = $("<div>").addClass("diamond-bottom").css({ "border": border_width+ "px solid transparent", "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50 + border_width - 1, "border-top-color" : note_color}); 
+      //diamond_bottom.css("border" , (circle_diameter/2) + "px solid transparent");
+
+      played_note.append( diamond_top ).append( diamond_bottom );
+    }
+    
+    $("#music_sheet").append( played_note );
+
+
 	  MIDI.setVolume(0, 55 );
 	  MIDI.noteOn(0, midi_note, velocity, delay);
 	  MIDI.noteOff(0, midi_note, delay + 0.75);
@@ -124,6 +147,7 @@ function play_for_x_y_z( x, y, z, play ) {
 
 
 }
+
 
 
 /* Kinect Hooks */
@@ -140,7 +164,7 @@ DepthJS = {
         console.log( "onUnregister" );
         //$("#registration").text("Hand not in view");
         if( MODE == RECORD_MODE ) {
-          pause_record_mode();
+         // pause_record_mode();
         }
       },
       onMove: function(x, y, z) {
