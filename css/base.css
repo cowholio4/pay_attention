@@ -1,7 +1,9 @@
 body {
   margin:0;
   height:100%;
-  width:100%
+  width:100%;
+  background-color: black;
+  color: white;
 }
 h1 {
   margin:0;
@@ -40,5 +42,17 @@ h1 {
 .square {
   width: 100px;
   height: 100px;
+}
+
+@-webkit-keyframes spin 
+{
+    from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+}
+.spin {
+  -webkit-animation-name: spin;
+  -webkit-animation-duration: 40000ms;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-timing-function: linear;
 }
 

@@ -4,13 +4,16 @@ var colors =  MusicTheory.Synesthesia.map('Isaac Newton (1704)');
 var START_MODE = 0;
 
 var EXPLORE_MODE = 1;
-var EXPLORE_PAUSE_MODE = 2;
 
 var RECORD_MODE = 3;
 var RECORD_PAUSE_MODE = 4;
 
+var BEAT_BOX = 5;
+var PLAYBACK = 6;
+var END_PLAYBACK = 7;
+
 var MODE = START_MODE;
-//var MODE = RECORD_MODE;
+//MODE = BEAT_BOX;
 //var MODE = EXPLORE_MODE;
 
 window.onload = function () {
@@ -33,12 +36,27 @@ window.onload = function () {
   if( MODE != START_MODE ) {
     $("#home").hide();
   }
+  if( MODE == BEAT_BOX ) {
+    start_beat_box();
+  }
   $("#home .swipe-left").click( start_record_mode );
   $("#home .swipe-right").click( start_explore_mode );
 
 };
 
+function go_home() {
+  MODE = START_MODE; 
+  $("body div").hide();
+  $("#home").show();
+  // delete all old notes 
+}
 
+function start_beat_box() {
+  MODE = BEAT_BOX; 
+  $("body div").hide();
+  $("#beat_box").show();
+
+}
 
 function start_record_mode() {
   $("body div").hide();
@@ -55,11 +73,6 @@ function start_explore_mode (){
   $("body div").hide();
   MODE = EXPLORE_MODE;
 
-}
-function pause_explore_mode() {
-  $("#home").hide();
-  $("#explore_pause").show();
-  MODE = EXPLORE_PAUSE_MODE;
 }
 
 var last_note = null;
@@ -151,6 +164,7 @@ function play_for_x_y_z( x, y, z, play ) {
 
 
 /* Kinect Hooks */
+var unregister_timeout = null;  
 DepthJS = {
       onKinectInit: function() {
         //$("#status").text("DepthJS + Kinect detected+!@");
@@ -158,13 +172,17 @@ DepthJS = {
       },
       onRegister: function(x, y, z, data) {
         console.log( "onRegister" );
+        clearTimeout( unregister_timeout );
         //$("#registration").text("Hand in view" + (data == null ? "" : ": " + data));
       },
       onUnregister: function() {
         console.log( "onUnregister" );
         //$("#registration").text("Hand not in view");
         if( MODE == RECORD_MODE ) {
-         // pause_record_mode();
+          unregister_timeout = setTimeout( function() { pause_record_mode(); }, 2000 );
+        }
+        else if( MODE == EXPLORE_MODE ) {
+          unregister_timeout = setTimeout( function() { go_home(); }, 2000 );
         }
       },
       onMove: function(x, y, z) {
@@ -176,11 +194,6 @@ DepthJS = {
           play_for_x_y_z( x, y, z, false );  
           last_position = { x : x, y : y, z : z };
         } 
-
-        //alert( "DepthJS + Kinect detected+!@");
-        //$("#x").text("x: " + x);
-        //$("#y").text("y: " + y);
-        //$("#z").text("z: " + z);
       },
       onSwipeLeft: function() {
         if( MODE == START_MODE || MODE == RECORD_PAUSE_MODE ) {
@@ -190,6 +203,9 @@ DepthJS = {
       onSwipeRight: function() {
         if( MODE == START_MODE ) {
           start_explore_mode();
+        }
+        else if ( MODE == RECORD_PAUSE_MODE ) {
+          start_beat_box();
         }
       },
       onSwipeDown: function() {
