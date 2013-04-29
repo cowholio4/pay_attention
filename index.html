@@ -26,31 +26,62 @@
   
   </head>
   <body>
+    <div id="hand"></div>
     <div id="home">
       <table width="100%" height="100%">
         <tr width="100%" height="100%" style="vertical-alignt:middle">
-          <td style="vertical-align:bottom;width:200px;padding-bottom:100px;text-align:right;">
+          <td class="swipe-left" style="vertical-align:bottom;padding-left:100px;width:300px;padding-bottom:100px;text-align:right;">
             <img class="swipe-left" src="./img/welcome_swipe_left.png"></img>
           </td>
           <td style="vertical-align:middle;text-align:center;">
             <img src="./img/welcome_logo.png"></img>
           </td>
-          <td style="vertical-align:bottom;width:200px;padding-bottom:100px;">
+          <td class="swipe-right" style="vertical-align:bottom;width:300px;padding-bottom:100px;padding-right">
             <img class="swipe-right" src="./img/welcome_swipe_right.png"></img>
           </td>
         </tr>
       </table>
     </div>
     <div id="record_pause" style="display:none;">
-      <ol>
-        <li>Swipe Left To Continue Recording</li>
-        <li>Swipe Right To Set Beat for Playback</li>
-      </ol>
+      <table width="100%" height="100%">
+        <tr width="100%"  height="100%" style="vertical-alignt:middle">
+          <td class="swipe-left">
+            <h4>Push Left To Continue Recording</h4>
+          </td>
+          <td class="swipe-right">
+            <h4>Swipe Right To Set Beat for Playback</h4>
+          </td>
+        </tr>
+      </table>
     </div>
     <div id="music_sheet"></div>
     <div id="current_note" class="circle"></div>
     <div id="hand_note" class="circle"></div>
     <div id="instrument"></div>
-    <div id="beat_box"></div>
+    <div id="beat_box">
+      <div id="register_hand">
+        <h1>Please extend your hand</h1> 
+      </div>
+      <div id="walk_back">
+        <h1>Please step back.</h1> 
+      </div>
+      <div id="walk_towards">
+        <h1>Please Walk Towards The Kinect</h1>
+        <h1>The pace that you walk sets the tempo</h1>
+      </div>
+    </div>
+    <div id="play_done" style="display:none">
+      <table width="100%" height="100%">
+        <tr width="100%"  height="100%" style="vertical-alignt:middle">
+          <td class="swipe-left">
+            <h4>Push Left To Play Again</h4>
+          </td>
+          <td class="swipe-right">
+            <h4>Swipe Right To Go Home</h4>
+          </td>
+        </tr>
+      </table>
+        
+    </div>
   </body>
 </html>

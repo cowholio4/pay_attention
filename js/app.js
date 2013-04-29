@@ -9,13 +9,17 @@ var RECORD_MODE = 3;
 var RECORD_PAUSE_MODE = 4;
 
 var BEAT_BOX = 5;
+var BEAT_BOX_WAIT = 1;
+var BEAT_BOX_RECORD = 2;
+var BEAT_BOX_STATUS = BEAT_BOX_WAIT; 
+
 var PLAYBACK = 6;
 var END_PLAYBACK = 7;
 
 var MODE = START_MODE;
 //MODE = BEAT_BOX;
 //var MODE = EXPLORE_MODE;
-
+var hand_is_registered = false;
 window.onload = function () {
 	MIDI.loadPlugin({
 		soundfontUrl: "./vendor/MIDI.js/soundfont/",
@@ -37,10 +41,19 @@ window.onload = function () {
     $("#home").hide();
   }
   if( MODE == BEAT_BOX ) {
+    // prefill notes
+    for( var i = 0; i < 1000; i ++ ) {
+      played_notes.push([  Math.random() * 100, Math.random() * 100, ( Math.random() * 1000 ) + 400 ]);
+    }
     start_beat_box();
   }
   $("#home .swipe-left").click( start_record_mode );
   $("#home .swipe-right").click( start_explore_mode );
+  $("#record_pause .swipe-left").click( start_record_mode );
+  $("#record_pause .swipe-right").click( start_beat_box );
+  $("#play_done .swipe-left").click(  start_beat_box );
+  $("#play_done .swipe-right").click( go_home );
+  
 
 };
 
@@ -50,11 +63,23 @@ function go_home() {
   $("#home").show();
   // delete all old notes 
 }
+function play_done() {
+  MODE = END_PLAYBACK;
+  $("body div").hide();
+
+}
 
 function start_beat_box() {
   MODE = BEAT_BOX; 
   $("body div").hide();
+
   $("#beat_box").show();
+  if( hand_is_registered ) {
+    $("#walk_back").show();
+  }
+  else {
+    $("#register_hand").show();
+  }
 
 }
 
@@ -62,6 +87,7 @@ function start_record_mode() {
   $("body div").hide();
   MODE = RECORD_MODE;
   $("#music_sheet").show();
+  $("#music_sheet div").show();
 }
 function pause_record_mode() {
   $("body div").hide();
@@ -98,6 +124,55 @@ function get_color_for_note_and_octave ( note, octave ) {
   var color = "hsla(" + cp[0] + "," + cp[1] + "%," + lightness  + "%," + cp[3] + ")";
   return color;
 }
+beats = [];
+first_beat = null;
+function update_beat( z ) {
+  if( BEAT_BOX_STATUS == BEAT_BOX_WAIT ) {
+    if( z > 2000 ) {
+      BEAT_BOX_STATUS = BEAT_BOX_RECORD;
+      $("#walk_towards").show();
+    }
+    else {
+      return;
+    }
+  }
+  beats.push( z );
+  if( first_beat == null ) {
+    first_beat = new Date().getTime()
+  }
+  // let's get some measurements before we hit the threshold
+  if( z <= 700 && beats.length > 5 ) {
+    time_since_begin = ( new Date().getTime() ) - first_beat;
+    var message =  beats.length + " - " + time_since_begin  ;
+    var bpm = 65;
+    if( time_since_begin < 200 ) {
+      bpm = 200;
+    }
+    else if( time_since_begin > 5000 ) {
+      bpm = 25;
+    }
+    else  {
+      time_since_begin -= 200
+      bpm = 175 - ( time_since_begin * ( 149/4800 ) );
+    }
+    first_beat = null;
+    beats = [];
+
+    $("#beat_box").append( "<h1>Your Beats Per Minute are:" + bpm  + "</h1>"  );
+    $("#beat_box").append( "<h1>Your song will start playing in a second.</h1>"  );
+
+    $("#beat_box").click( function() {
+          play_song( 100 );
+        });
+    MODE = PLAYBACK;
+    setTimeout( function() { play_song(bpm); }, 500 );
+    
+  }
+}
+
+function show_hand( x, y ) {
+  $("#hand").show().css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50 });
+}
 
 // x and y are on a 0-100 scale
 function play_for_x_y_z( x, y, z, play ) {
@@ -113,10 +188,10 @@ function play_for_x_y_z( x, y, z, play ) {
     velocity = 0;
   }
 
-  console.log("velocity:", velocity );
+  //console.log("velocity:", velocity );
 
-  console.log( "midi_note " +  midi_note );
-  console.log( x, y, z );
+  //console.log( "midi_note " +  midi_note );
+  //console.log( x, y, z );
   note_color = get_color_for_note_and_octave( note, octave );
 
   circle_diameter = (velocity / 8.5) + 50;
@@ -132,7 +207,9 @@ function play_for_x_y_z( x, y, z, play ) {
 
   if( play ) {  
 	  // play the note
-    var note_number = played_notes.push( [ x, y, z] );
+    if( MODE != PLAYBACK ) {
+      var note_number = played_notes.push( [ x, y, z] );
+    }
     // not sharps 
     if( note.indexOf("#") == -1 ) {
       played_note = $("<div>").addClass("square").css({ "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() ) - 50,  background: note_color  });
@@ -161,7 +238,23 @@ function play_for_x_y_z( x, y, z, play ) {
 
 }
 
-
+var beat_timeout = null;
+function play_song( bpm ) { 
+  $("body div").hide();
+  $("#music_sheet").html('').show();
+  MODE = PLAYBACK;
+  var bps = bpm / 60;
+  var beat_interval =  Math.floor( (1/bps) * 1000 );
+  console.log( "beat interval", beat_interval);
+  beat_timeout = setInterval( function() { 
+       var n = played_notes.shift(); 
+       if( n == null ) {
+          clearInterval( beat_timeout );
+          return;
+       }
+       play_for_x_y_z( n[0], n[1], n[2], true );
+    }, beat_interval ); 
+}
 
 /* Kinect Hooks */
 var unregister_timeout = null;  
@@ -172,28 +265,54 @@ DepthJS = {
       },
       onRegister: function(x, y, z, data) {
         console.log( "onRegister" );
+        hand_is_registered = true;
         clearTimeout( unregister_timeout );
+        if( MODE == BEAT_BOX ) {
+          $("#beat_box div").hide();
+          $("#walk_back").show();
+        }
         //$("#registration").text("Hand in view" + (data == null ? "" : ": " + data));
       },
       onUnregister: function() {
+        $("#hand").hide();
         console.log( "onUnregister" );
-        //$("#registration").text("Hand not in view");
-        if( MODE == RECORD_MODE ) {
-          unregister_timeout = setTimeout( function() { pause_record_mode(); }, 2000 );
-        }
-        else if( MODE == EXPLORE_MODE ) {
-          unregister_timeout = setTimeout( function() { go_home(); }, 2000 );
-        }
+        unregister_timeout = setTimeout( function() { 
+          hand_is_registered = false;
+          //$("#registration").text("Hand not in view");
+          if( MODE == RECORD_MODE ) {
+            pause_record_mode();
+          }
+          else if( MODE == EXPLORE_MODE ) {
+            go_home();
+          }
+          else if( MODE == BEAT_BOX ) {
+           //$("#walk_back").show();
+            BEAT_BOX_STATUS = BEAT_BOX_WAIT;
+            beats = [];
+            $("#beat_box div").hide();
+            $("#register_hand").show();
+
+          }
+        }, 2000 );
       },
       onMove: function(x, y, z) {
         //console.log( x, y, z);
+        last_position = { x : x, y : y, z : z };
         if( MODE == EXPLORE_MODE ) {
           play_for_x_y_z( x, y, z, true );  
         }
         else if( MODE == RECORD_MODE ) {
           play_for_x_y_z( x, y, z, false );  
-          last_position = { x : x, y : y, z : z };
         } 
+        else if( MODE == BEAT_BOX ) {
+          update_beat( z ); 
+        }
+        else if( MODE == PLAYBACK ) {
+          
+        }
+        else {
+          show_hand( x, y );
+        }
       },
       onSwipeLeft: function() {
         if( MODE == START_MODE || MODE == RECORD_PAUSE_MODE ) {
@@ -202,10 +321,10 @@ DepthJS = {
       },
       onSwipeRight: function() {
         if( MODE == START_MODE ) {
-          start_explore_mode();
+        //  start_explore_mode();
         }
         else if ( MODE == RECORD_PAUSE_MODE ) {
-          start_beat_box();
+         // start_beat_box();
         }
       },
       onSwipeDown: function() {
@@ -216,11 +335,19 @@ DepthJS = {
       },
       onPush: function() {
          //       alert("onPush");
-        console.log( "PUSH" );
+
         if( MODE == RECORD_MODE ) {
-          console.log( "RECORD PUSH");
           play_for_x_y_z( last_position.x, last_position.y, last_position.z, true );
         } 
+        else if ( MODE == START_MODE || MODE == RECORD_PAUSE_MODE || MODE == END_PLAYBACK ) {
+          //  "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() )
+          var x = ( last_position.x / 100 ) *  $(window).width();
+          var y =  ( last_position.y / 100 ) * $(window).height()
+          console.log( x, y);
+          $("#hand").hide();
+          console.log( $(document.elementFromPoint(x,y) ) );
+          $(document.elementFromPoint(x,y) ).click();
+        }
       },
       onPull: function() {
                // alert("onPull");
@@ -256,7 +383,7 @@ var notes = {
     "G#": 8,
     };
 function getMidiNumberForNoteAndOctave ( note, octave ) {
-  console.log( "getMidiNumberForNoteAndOctave: " + note + " - " + octave );
+  //console.log( "getMidiNumberForNoteAndOctave: " + note + " - " + octave );
   var base = notes[note];
 
   //a0 == 33
