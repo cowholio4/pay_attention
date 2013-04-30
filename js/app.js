@@ -42,7 +42,7 @@ window.onload = function () {
   }
   if( MODE == BEAT_BOX ) {
     // prefill notes
-    for( var i = 0; i < 1000; i ++ ) {
+    for( var i = 0; i < 10; i ++ ) {
       played_notes.push([  Math.random() * 100, Math.random() * 100, ( Math.random() * 1000 ) + 400 ]);
     }
     start_beat_box();
@@ -62,10 +62,16 @@ function go_home() {
   $("body div").hide();
   $("#home").show();
   // delete all old notes 
+  played_notes = [];
+  $("#music_sheet").html('').show();
 }
 function play_done() {
   MODE = END_PLAYBACK;
   $("body div").hide();
+
+  $("#play_done").show();
+  played_notes = song_copy.slice(0);
+   
 
 }
 
@@ -128,7 +134,7 @@ beats = [];
 first_beat = null;
 function update_beat( z ) {
   if( BEAT_BOX_STATUS == BEAT_BOX_WAIT ) {
-    if( z > 2000 ) {
+    if( z > 1500 ) {
       BEAT_BOX_STATUS = BEAT_BOX_RECORD;
       $("#walk_towards").show();
     }
@@ -158,12 +164,9 @@ function update_beat( z ) {
     first_beat = null;
     beats = [];
 
-    $("#beat_box").append( "<h1>Your Beats Per Minute are:" + bpm  + "</h1>"  );
-    $("#beat_box").append( "<h1>Your song will start playing in a second.</h1>"  );
+  // $("#beat_box").append( "<h1>Your Beats Per Minute are:" + bpm  + "</h1>"  );
+   // $("#beat_box").append( "<h1>Your song will start playing in a second.</h1>"  );
 
-    $("#beat_box").click( function() {
-          play_song( 100 );
-        });
     MODE = PLAYBACK;
     setTimeout( function() { play_song(bpm); }, 500 );
     
@@ -239,22 +242,27 @@ function play_for_x_y_z( x, y, z, play ) {
 }
 
 var beat_timeout = null;
+var song_copy = null;
 function play_song( bpm ) { 
   $("body div").hide();
+  // delete all old notes
   $("#music_sheet").html('').show();
   MODE = PLAYBACK;
   var bps = bpm / 60;
   var beat_interval =  Math.floor( (1/bps) * 1000 );
   console.log( "beat interval", beat_interval);
+  song_copy = played_notes.slice(0);
   beat_timeout = setInterval( function() { 
        var n = played_notes.shift(); 
        if( n == null ) {
           clearInterval( beat_timeout );
+          play_done();
           return;
        }
        play_for_x_y_z( n[0], n[1], n[2], true );
     }, beat_interval ); 
 }
+
 
 /* Kinect Hooks */
 var unregister_timeout = null;  
