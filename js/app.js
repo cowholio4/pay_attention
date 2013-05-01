@@ -18,7 +18,7 @@ var END_PLAYBACK = 7;
 
 var MODE = START_MODE;
 //MODE = RECORD_PAUSE_MODE;
-MODE = BEAT_BOX;
+//MODE = BEAT_BOX;
 //var MODE = EXPLORE_MODE;
 var hand_is_registered = false;
 window.onload = function () {
@@ -59,6 +59,13 @@ window.onload = function () {
   
 
 };
+function play_random_song () {
+
+  for( var i = 0; i < 100; i ++ ) {
+    played_notes.push([  Math.random() * 100, Math.random() * 100, ( Math.random() * 1000 ) + 400 ]);
+  }
+  play_song( ( Math.random() * 200) + 50 );
+}
 
 function set_background_image( file ) {
   //all the images are h 1440 × w 1296
