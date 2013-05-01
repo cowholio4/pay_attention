@@ -4,3 +4,6 @@
 [submodule "vendor/depthjs"]
 	path = vendor/depthjs
 	url = git://github.com/doug/depthjs.git
+[submodule "vendor/backstretch"]
+	path = vendor/backstretch
+	url = git://github.com/srobbin/jquery-backstretch.git

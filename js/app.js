@@ -17,7 +17,8 @@ var PLAYBACK = 6;
 var END_PLAYBACK = 7;
 
 var MODE = START_MODE;
-//MODE = BEAT_BOX;
+//MODE = RECORD_PAUSE_MODE;
+MODE = BEAT_BOX;
 //var MODE = EXPLORE_MODE;
 var hand_is_registered = false;
 window.onload = function () {
@@ -36,13 +37,15 @@ window.onload = function () {
    msg += event.pageX + ", " + event.pageY;
   });
   */
-  
-  if( MODE != START_MODE ) {
-    $("#home").hide();
+  if( MODE == START_MODE ) {
+    go_home();
   }
-  if( MODE == BEAT_BOX ) {
+  else if( MODE == RECORD_PAUSE_MODE ) {
+    pause_record_mode();
+  }
+  else if( MODE == BEAT_BOX ) {
     // prefill notes
-    for( var i = 0; i < 10; i ++ ) {
+    for( var i = 0; i < 100; i ++ ) {
       played_notes.push([  Math.random() * 100, Math.random() * 100, ( Math.random() * 1000 ) + 400 ]);
     }
     start_beat_box();
@@ -57,10 +60,19 @@ window.onload = function () {
 
 };
 
+function set_background_image( file ) {
+  //all the images are h 1440 × w 1296
+  var width = ( 1400 / 1296 ) * $(window).height();
+  var left =  ($(window).width() - width) /2;
+  $("img.background").show().attr( { "src" : "img/" + file, "height" : $(window).height(), "width" : width }).css({ "left" : left  } );
+  
+}
+
 function go_home() {
   MODE = START_MODE; 
   $("body div").hide();
   $("#home").show();
+  set_background_image("home.png");
   // delete all old notes 
   played_notes = [];
   $("#music_sheet").html('').show();
@@ -68,6 +80,7 @@ function go_home() {
 function play_done() {
   MODE = END_PLAYBACK;
   $("body div").hide();
+  set_background_image("song_finished.png");
 
   $("#play_done").show();
   played_notes = song_copy.slice(0);
@@ -80,17 +93,19 @@ function start_beat_box() {
   $("body div").hide();
 
   $("#beat_box").show();
+  set_background_image( "rythym.png");
   if( hand_is_registered ) {
-    $("#walk_back").show();
+    set_background_image( "step_back.png");
   }
   else {
-    $("#register_hand").show();
+    set_background_image( "extend_hand.png");
   }
 
 }
 
 function start_record_mode() {
   $("body div").hide();
+  $("img.background").hide();
   MODE = RECORD_MODE;
   $("#music_sheet").show();
   $("#music_sheet div").show();
@@ -98,11 +113,13 @@ function start_record_mode() {
 function pause_record_mode() {
   $("body div").hide();
   $("#record_pause").show();
+  set_background_image("record_pause.png");
   MODE = RECORD_PAUSE_MODE;
 }
 
 function start_explore_mode (){
   $("body div").hide();
+  $("img.background").hide();
   MODE = EXPLORE_MODE;
 
 }
@@ -134,11 +151,12 @@ beats = [];
 first_beat = null;
 function update_beat( z ) {
   if( BEAT_BOX_STATUS == BEAT_BOX_WAIT ) {
-    if( z > 1500 ) {
+    if( z > 1300 ) {
       BEAT_BOX_STATUS = BEAT_BOX_RECORD;
-      $("#walk_towards").show();
+      set_background_image( "rythym.png");
     }
     else {
+      console.log("not far enough away");
       return;
     }
   }
@@ -147,20 +165,22 @@ function update_beat( z ) {
     first_beat = new Date().getTime()
   }
   // let's get some measurements before we hit the threshold
-  if( z <= 700 && beats.length > 5 ) {
+  if( z <= 800 && beats.length > 2 ) {
     time_since_begin = ( new Date().getTime() ) - first_beat;
     var message =  beats.length + " - " + time_since_begin  ;
+    console.log( message );
     var bpm = 65;
-    if( time_since_begin < 200 ) {
-      bpm = 200;
+    if( time_since_begin < 210 ) {
+      bpm = 210;
     }
     else if( time_since_begin > 5000 ) {
       bpm = 25;
     }
     else  {
       time_since_begin -= 200
-      bpm = 175 - ( time_since_begin * ( 149/4800 ) );
+      bpm = 210 - ( time_since_begin * ( 185/4790 ) );
     }
+    console.log( bpm );
     first_beat = null;
     beats = [];
 
@@ -168,7 +188,7 @@ function update_beat( z ) {
    // $("#beat_box").append( "<h1>Your song will start playing in a second.</h1>"  );
 
     MODE = PLAYBACK;
-    setTimeout( function() { play_song(bpm); }, 500 );
+    play_song(bpm);
     
   }
 }
@@ -245,6 +265,7 @@ var beat_timeout = null;
 var song_copy = null;
 function play_song( bpm ) { 
   $("body div").hide();
+  $("img.background").hide();
   // delete all old notes
   $("#music_sheet").html('').show();
   MODE = PLAYBACK;
@@ -276,8 +297,7 @@ DepthJS = {
         hand_is_registered = true;
         clearTimeout( unregister_timeout );
         if( MODE == BEAT_BOX ) {
-          $("#beat_box div").hide();
-          $("#walk_back").show();
+          set_background_image( "step_back.png");
         }
         //$("#registration").text("Hand in view" + (data == null ? "" : ": " + data));
       },
@@ -297,9 +317,7 @@ DepthJS = {
            //$("#walk_back").show();
             BEAT_BOX_STATUS = BEAT_BOX_WAIT;
             beats = [];
-            $("#beat_box div").hide();
-            $("#register_hand").show();
-
+            set_background_image( "extend_hand.png");
           }
         }, 2000 );
       },
@@ -323,17 +341,8 @@ DepthJS = {
         }
       },
       onSwipeLeft: function() {
-        if( MODE == START_MODE || MODE == RECORD_PAUSE_MODE ) {
-          start_record_mode();
-        }
       },
       onSwipeRight: function() {
-        if( MODE == START_MODE ) {
-        //  start_explore_mode();
-        }
-        else if ( MODE == RECORD_PAUSE_MODE ) {
-         // start_beat_box();
-        }
       },
       onSwipeDown: function() {
                     // alert("onSwipeDown");
@@ -351,9 +360,10 @@ DepthJS = {
           //  "left":( ( x / 100 ) * $(window).width() ) - 50  , "top": ( ( y/ 100 ) *  $(window).height() )
           var x = ( last_position.x / 100 ) *  $(window).width();
           var y =  ( last_position.y / 100 ) * $(window).height()
-          console.log( x, y);
+          //console.log( x, y);
+          // we hide the hand so we get the element below it
           $("#hand").hide();
-          console.log( $(document.elementFromPoint(x,y) ) );
+          //console.log( $(document.elementFromPoint(x,y) ) );
           $(document.elementFromPoint(x,y) ).click();
         }
       },
